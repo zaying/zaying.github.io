@@ -82,12 +82,12 @@ analytics:
 author:
   name             : "Wang Jiaying"
   avatar           : "profile.png"
-  bio              : "MSc Cyber Security"
+  bio              : "PhD student"
   location         : "China"
   employer         :
   pubmed           :  # "https://www.ncbi.nlm.nih.gov/pubmed/?term=john+snow"
   googlescholar    :  # "http://yourfullgooglescholarurl.com"
-  email            :
+  email            :  jiaying.wang.2301@student.lu.se
   researchgate     :  # example: "https://www.researchgate.net/profile/yourprofile"
   uri              :
   bitbucket        :

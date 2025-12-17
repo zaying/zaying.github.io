@@ -177,15 +177,19 @@ kramdown:
 collections:
   teaching:
     output: false
+    published: false
     permalink: /:collection/:path/
   publications:
     output: false
+    published: false
     permalink: /:collection/:path/
   portfolio:
     output: false
+    published: false
     permalink: /:collection/:path/
   talks:
     output: false
+    published: false
     permalink: /:collection/:path/
 
 

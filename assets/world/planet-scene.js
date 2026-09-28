@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { ActorController } from './actor-controller.js';
+import { loadManifest, loadFrame, loadFrames, firstFrames } from './actor-assets.js';
 
 const FLOOR = 4.35;
 const RADIUS = 4.85;
@@ -163,34 +164,24 @@ export async function createUniverse({ mount, onOpen, onUpdate, onProgress, lang
     if (i % 4 === 0) { const flower = mesh(new THREE.OctahedronGeometry(.16), glow(i % 8 ? COLORS.pink : COLORS.mint), [Math.cos(a) * r, FLOOR + .55, Math.sin(a) * r]); flower.scale.y = 1.7; }
   }
 
-  const manifestResponse = await fetch('./assets/world/actors/manifest.json');
-  if (!manifestResponse.ok) throw new Error('Actor manifest could not load.');
-  const manifest = await manifestResponse.json();
+  const manifest = await loadManifest();
   const actor = new ActorController(manifest.groups);
   const textureCache = new Map();
   async function frameTexture(frame) {
     if (textureCache.has(frame.src)) return textureCache.get(frame.src);
     const promise = (async () => {
-      const response = await fetch(frame.src); if (!response.ok) throw new Error(`Missing original frame: ${frame.src}`);
-      const bitmap = await createImageBitmap(await response.blob());
-      const [x, y, w, h] = frame.crop;
-      // Only empty export margins are cropped, using alpha bounds recorded from the source.
-      const ratio = Math.min(1, 560 / h, 1152 / w);
-      const image = document.createElement('canvas'); image.width = Math.ceil(w * ratio); image.height = Math.ceil(h * ratio);
-      image.getContext('2d').drawImage(bitmap, x, y, w, h, 0, 0, image.width, image.height); bitmap.close();
-      const texture = new THREE.CanvasTexture(image); texture.colorSpace = THREE.SRGBColorSpace;
+      const image = await loadFrame(frame);
+      const texture = new THREE.Texture(image); texture.needsUpdate = true; texture.colorSpace = THREE.SRGBColorSpace;
       texture.minFilter = THREE.LinearFilter; texture.magFilter = THREE.LinearFilter; texture.generateMipmaps = false;
-      return { texture, image, frame };
+      const entry = { texture, image, frame }; textureCache.set(frame.src, entry); return entry;
     })();
     textureCache.set(frame.src, promise); return promise;
   }
   const allFrames = introOnly ? [...manifest.groups.idle, ...manifest.groups.npcIdle] : Object.values(manifest.groups).flat();
-  // Limit decode concurrency so the full animation set is comfortable on mobile.
-  let loaded = 0, nextFrame = 0;
-  await Promise.all(Array.from({ length: 3 }, async () => {
-    while (nextFrame < allFrames.length) { const frame = allFrames[nextFrame++]; await frameTexture(frame); onProgress?.(++loaded / allFrames.length); }
-  }));
-  for (const [key, value] of textureCache) textureCache.set(key, await value);
+  // Only two images block the first render. Idle animations stream in afterward.
+  let loaded = 0;
+  await Promise.all(firstFrames(manifest.groups).map(async (frame) => { await frameTexture(frame); onProgress?.(++loaded / 2); }));
+  let animationsStarted = false;
 
   const player = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, alphaTest: .015, toneMapped: false })); scene.add(player);
   const npc = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, alphaTest: .015, toneMapped: false })); npc.userData.destination = 'npc'; interactive.push(npc); scene.add(npc);
@@ -205,7 +196,7 @@ export async function createUniverse({ mount, onOpen, onUpdate, onProgress, lang
     sprite.center.set(frame.anchor[0] / w, 1 - frame.anchor[1] / h);
     sprite.scale.set(w * scale * direction, h * scale, 1);
   }
-  applyFrame(player, actor.frame()); applyFrame(npc, manifest.groups.npcIdle[1], .0031);
+  applyFrame(player, actor.frame()); applyFrame(npc, manifest.groups.npcIdle[0], .0031);
   player.position.copy(playerPosition); npc.position.copy(npcPosition);
 
   const reviveBeam = mesh(new THREE.CylinderGeometry(.75, .75, 4.3, 32, 1, true), new THREE.MeshBasicMaterial({ color: COLORS.mint, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }), [0, 0, 0]); reviveBeam.visible = false;
@@ -362,6 +353,10 @@ export async function createUniverse({ mount, onOpen, onUpdate, onProgress, lang
     requestAnimationFrame(render);
     if (introOnly && paused) { last = time; return; }
     if (lost || document.hidden) { last = time; return; }
+    if (!animationsStarted) {
+      animationsStarted = true;
+      loadFrames(allFrames, (frame) => { frameTexture(frame).catch(console.warn); });
+    }
     const dt = Math.min((time - last) / 1000 || .016, .05); last = time;
     if (cameraTween) {
       cameraTween.elapsed += dt; const t = Math.min(cameraTween.elapsed / .9, 1), smooth = t * t * (3 - 2 * t);
@@ -419,7 +414,7 @@ export async function createUniverse({ mount, onOpen, onUpdate, onProgress, lang
     labels.forEach((label) => { label.button.textContent = next === 'zh' ? label.zh : label.en; });
     canvas.setAttribute('aria-label', next === 'zh' ? '3D 小宇宙入口：拖动旋转，滚轮或双指缩放。' : '3D cosmos entrance: drag to rotate, scroll or pinch to zoom.');
   }
-  setLanguage(lang); requestAnimationFrame(render);
+  setLanguage(lang); renderer.render(scene, camera); requestAnimationFrame(render);
   return {
     action, view, rotate, zoom, challenge, interact,
     move(direction, active) { const key = { left: 'a', right: 'd', up: 'w', down: 's' }[direction]; if (active) { held.add(key); actor.demoUntil = 0; } else held.delete(key); },

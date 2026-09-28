@@ -1,6 +1,8 @@
 """Copy original frames and record their alpha bounds; never rewrite source pixels."""
 import json
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 from PIL import Image
 
@@ -49,3 +51,4 @@ for group, (directory, names) in GROUPS.items():
 OUTPUT.mkdir(parents=True, exist_ok=True)
 (OUTPUT / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8')
 print(f'Prepared {sum(map(len, manifest["groups"].values()))} original frames in {len(GROUPS)} groups.')
+subprocess.run([sys.executable, str(ROOT / 'scripts' / 'prepare-web-assets.py')], check=True)

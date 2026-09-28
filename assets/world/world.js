@@ -36,6 +36,8 @@ let universe = null;
 let entranceScene = null;
 let sceneView = null;
 let screen = 'entrance';
+let worldPromise = null;
+let entrancePromise = null;
 Object.assign(translations.en, {
   loading: 'Assembling your little planet…', sceneError: 'The 3D scene could not load. Your personal information is still available from the navigation above.', retry: 'Try again',
   viewOrbit: 'Orbit', viewLand: 'Land', planetLabel: 'PUDDING PLANET / A LITTLE LAB IN SPACE', challenge: 'Challenge Stoneheart', peace: 'End the duel', npcWaiting: 'Stoneheart · waiting',
@@ -161,6 +163,7 @@ function enterWorld(updateHash = true) {
   $('#entrance').hidden = true; $('#main').hidden = false; $('.footer').hidden = false; $('#cosmos').hidden = false; $('.top-nav').hidden = false;
   entranceScene?.pause(true); universe?.pause(panel.open); window.scrollTo(0, 0);
   $('#reset-view').hidden = false; sceneView?.pause(panel.open);
+  ensureWorld();
   if (updateHash) history.pushState(null, '', '#world');
   $('#explore').focus({ preventScroll: true });
 }
@@ -169,6 +172,7 @@ function returnToEntrance(updateHash = true) {
   $('#entrance').hidden = false; $('#main').hidden = true; $('.footer').hidden = true; $('#cosmos').hidden = true; $('.top-nav').hidden = true;
   universe?.pause(true); entranceScene?.pause(false); window.scrollTo(0, 0);
   $('#reset-view').hidden = true; sceneView?.reset(); sceneView?.pause(true);
+  ensureEntrance();
   if (updateHash) history.pushState(null, '', location.pathname + location.search);
   $('#enter-world').focus({ preventScroll: true });
 }
@@ -219,13 +223,39 @@ const mobileLayout = matchMedia('(max-width: 760px)');
 function syncMovesLayout() { const open = !mobileLayout.matches; $('.action-dock').classList.toggle('moves-open', open); $('#toggle-actions').setAttribute('aria-expanded', String(open)); }
 mobileLayout.addEventListener('change', syncMovesLayout); syncMovesLayout();
 $('#toggle-actions').addEventListener('click', () => { if (!mobileLayout.matches) return; const open = $('.action-dock').classList.toggle('moves-open'); $('#toggle-actions').setAttribute('aria-expanded', String(open)); });
-setMotion(reduced); setLanguage(language); returnToEntrance(false); syncRoute();
-import('./scene-view.js?v=mobile-20260928').then(({ createSceneView }) => { sceneView = createSceneView({ element: $('#cosmos'), sceneElement: $('.adventure-stage'), canvas: $('#adventure-canvas'), reduced }); sceneView.pause(screen !== 'world' || panel.open); }).catch(console.error);
-import('./adventure-scene.js?v=mobile-20260928').then(({ createAdventure }) => createAdventure({ canvas: $('#adventure-canvas'), language, onOpen: openPanel, onUpdate: updateHUD, onFocus: (x, y) => sceneView?.focus(x, y) })).then((result) => { universe = result; universe.setLanguage(language); universe.pause(screen !== 'world' || panel.open); }).catch((error) => { console.error(error); hint.textContent = language === 'zh' ? '角色素材加载失败，请刷新重试。' : 'Artwork could not load. Please refresh.'; });
-import('./planet-scene.js').then(({ createUniverse }) => createUniverse({
+function ensureWorld() {
+  if (worldPromise) return worldPromise;
+  const status = $('#world-loading'); status.hidden = false; $('#retry-world').hidden = true;
+  $('#world-loading-text').textContent = language === 'zh' ? '正在唤醒小鼻嘎和石心人…' : 'Waking Pudding and Stoneheart…';
+  const panorama = $('.mobile-panorama');
+  if (!panorama.getAttribute('src')) {
+    panorama.addEventListener('error', () => { if (!panorama.src.endsWith('panorama.png')) panorama.src = './assets/world/panorama.png'; });
+    panorama.src = panorama.dataset.src;
+  }
+  import('./scene-view.js?v=fast-20260928').then(({ createSceneView }) => {
+    if (!sceneView) sceneView = createSceneView({ element: $('#cosmos'), sceneElement: $('.adventure-stage'), canvas: $('#adventure-canvas'), reduced });
+    sceneView.pause(screen !== 'world' || panel.open);
+  }).catch(console.error);
+  worldPromise = import('./adventure-scene.js?v=fast-20260928').then(({ createAdventure }) => createAdventure({ canvas: $('#adventure-canvas'), language, onOpen: openPanel, onUpdate: updateHUD, onFocus: (x, y) => sceneView?.focus(x, y) })).then((result) => {
+    universe = result; universe.setLanguage(language); universe.pause(screen !== 'world' || panel.open); status.hidden = true;
+  }).catch((error) => {
+    console.error(error); worldPromise = null; $('#retry-world').hidden = false;
+    $('#world-loading-text').textContent = language === 'zh' ? '角色素材未加载成功，请点击重试。' : 'Artwork could not load. Tap to retry.';
+  });
+  return worldPromise;
+}
+$('#retry-world').addEventListener('click', ensureWorld);
+function ensureEntrance() {
+  if (entrancePromise) return entrancePromise;
+  entrancePromise = import('./planet-scene.js?v=fast-20260928').then(({ createUniverse }) => createUniverse({
   mount: $('#scene-host'), language, reduced, introOnly: true,
   onProgress(progress) { $('#scene-loading span:last-child').textContent = `${translations[language].loading} ${Math.round(progress * 100)}%`; },
 })).then((result) => {
   entranceScene = result; entranceScene.setLanguage(language); entranceScene.setReduced(reduced); entranceScene.pause(screen !== 'entrance');
   $('#scene-loading').hidden = true; $('#scene-host').dataset.ready = 'true';
 }).catch((error) => { console.error(error); $('#scene-loading').hidden = true; $('#scene-error').hidden = false; $('#scene-host').dataset.ready = 'error'; });
+  return entrancePromise;
+}
+setMotion(reduced); setLanguage(language);
+// A direct #world link does not download or initialize the hidden 3D entrance.
+if (location.hash) syncRoute(); else returnToEntrance(false);

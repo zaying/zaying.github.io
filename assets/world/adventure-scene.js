@@ -1,23 +1,23 @@
 import { ActorController } from './actor-controller.js';
 import { EncounterController, StoneheartController, distance, facingFor, ALERT_RADIUS } from './encounter-controller.js';
+import { loadManifest, loadFrame, loadFrames, loadImage, firstFrames, availableFrame } from './actor-assets.js';
 
 export async function createAdventure({ canvas, onOpen, onUpdate, onFocus, language = 'en' }) {
-  const response = await fetch('./assets/world/actors/manifest.json');
-  if (!response.ok) throw new Error('Artwork manifest could not load.');
-  const manifest = await response.json(), frames = Object.values(manifest.groups).flat();
+  const manifest = await loadManifest(), frames = Object.values(manifest.groups).flat();
   const images = new Map();
-  const load = async (src) => { const image = new Image(); image.src = src; await image.decode(); return image; };
-  let next = 0;
-  await Promise.all(Array.from({ length: 3 }, async () => {
-    while (next < frames.length) {
-      const frame = frames[next++], image = await load(frame.src), [x, y, w, h] = frame.crop;
-      const ratio = Math.min(1, 560 / h, 1152 / w), cropped = document.createElement('canvas');
-      cropped.width = Math.ceil(w * ratio); cropped.height = Math.ceil(h * ratio);
-      cropped.getContext('2d').drawImage(image, x, y, w, h, 0, 0, cropped.width, cropped.height);
-      images.set(frame.src, cropped);
-    }
-  }));
-  const crystal = await load('./assets/world/crystal-shard.svg');
+  await Promise.all(firstFrames(manifest.groups).map(async (frame) => images.set(frame.src, await loadFrame(frame))));
+  // A small effect asset must never prevent either character from appearing.
+  let crystal = document.createElement('canvas'); crystal.width = 64; crystal.height = 32;
+  const shardContext = crystal.getContext('2d'); shardContext.fillStyle = '#c9b9ed';
+  shardContext.beginPath(); shardContext.moveTo(0, 16); shardContext.lineTo(20, 4); shardContext.lineTo(64, 16); shardContext.lineTo(20, 28); shardContext.closePath(); shardContext.fill();
+  loadImage('./assets/world/crystal-shard.svg').then((image) => { crystal = image; }).catch(console.warn);
+  let animationsStarted = false;
+  function loadAnimations() {
+    if (animationsStarted) return; animationsStarted = true;
+    loadFrames(frames, (frame, image) => { images.set(frame.src, image); frameToken = ''; }, () => {
+      canvas.dataset.partial = 'true'; // Other frames keep animating after a failed download.
+    });
+  }
   const ctx = canvas.getContext('2d'), actor = new ActorController(manifest.groups), encounter = new EncounterController(), stoneheart = new StoneheartController();
   const held = new Set(), effects = [], player = { x: 480, y: 480 }, npc = { x: 735, y: 470 };
   let width = 0, height = 0, last = 0, elapsed = 0, paused = true, facing = 1, target = null, frameToken = '', lang = language;
@@ -27,19 +27,23 @@ export async function createAdventure({ canvas, onOpen, onUpdate, onFocus, langu
   new ResizeObserver(resize).observe(canvas); resize();
   const point = (position) => ({ x: position.x / 1000 * width, y: position.y / 600 * height });
   function drawFrame(context, frame, x, y, scale, direction = 1) {
+    frame = availableFrame(frame, manifest.groups, images);
     const image = images.get(frame.src), [, , w, h] = frame.crop;
     context.save(); context.translate(x, y); context.scale(direction, 1);
     context.drawImage(image, -frame.anchor[0] * scale, -frame.anchor[1] * scale, w * scale, h * scale); context.restore();
   }
   function previewFrame(frame) {
+    const requested = frame; frame = availableFrame(frame, manifest.groups, images);
     previewCtx.clearRect(0, 0, preview.width, preview.height);
     const [x, y, w, h] = frame.crop, scale = Math.min((preview.width - 36) / w, (preview.height - 36) / h);
     previewCtx.save(); previewCtx.translate(preview.width / 2, preview.height / 2); previewCtx.scale(facing, 1);
     previewCtx.drawImage(images.get(frame.src), -w * scale / 2, -h * scale / 2, w * scale, h * scale); previewCtx.restore();
-    document.querySelector('#frame-name').textContent = `${frame.group} / ${frame.index + 1} · ${frame.source.split('\\').pop()}`;
+    document.querySelector('#frame-name').textContent = `${requested.group} / ${requested.index + 1} · ${frame.source.split('\\').pop()}`;
   }
   function action(name, demo = false) {
     if (['hurt', 'death'].includes(name)) return false;
+    const group = name === 'revive' ? 'death' : name;
+    loadFrames(manifest.groups[group] || [], (frame, image) => images.set(frame.src, image));
     const result = actor.trigger(name, { demo }); if (result) canvas.focus({ preventScroll: true }); return result;
   }
   function interact() {
@@ -96,6 +100,7 @@ export async function createAdventure({ canvas, onOpen, onUpdate, onFocus, langu
   function render(time) {
     requestAnimationFrame(render); const dt = Math.min((time - last) / 1000 || .016, .05); last = time;
     if (paused || document.hidden || !width) return;
+    loadAnimations();
     elapsed += dt;
     let dx = (held.has('d') || held.has('ArrowRight') ? 1 : 0) - (held.has('a') || held.has('ArrowLeft') ? 1 : 0);
     let dy = (held.has('s') || held.has('ArrowDown') ? 1 : 0) - (held.has('w') || held.has('ArrowUp') ? 1 : 0);

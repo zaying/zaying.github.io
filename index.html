@@ -7,10 +7,9 @@
   <meta name="description" content="Wang Jiaying (王佳影), Ph.D. student at the Software Institute, Nanjing University. AI4Health, medical EEG, millimeter-wave radar heart-rate estimation, and trustworthy AI for incomplete physiological and biological signals.">
   <title>Zaying · A little universe</title>
   <link rel="icon" href="./assets/world/favicon.svg" type="image/svg+xml">
-  <link rel="preload" href="./assets/world/panorama.png" as="image">
-  <link rel="stylesheet" href="./assets/world/world.css?v=mobile-20260928">
+  <link rel="stylesheet" href="./assets/world/world.css?v=fast-20260928">
   <script type="importmap">{"imports":{"three":"./assets/world/vendor/three.module.js"}}</script>
-  <script src="./assets/world/world.js?v=mobile-20260928" defer></script>
+  <script src="./assets/world/world.js?v=fast-20260928" defer></script>
 </head>
 <body data-screen="entrance">
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><defs>
@@ -85,8 +84,9 @@
       <button class="station station-creations" data-open="creations" style="--x:88;--y:58;--station-color:var(--lavender)"><span class="station-object"><svg viewBox="0 0 90 90" aria-hidden="true"><path d="m45 9 25 18 12 37-37 20L18 62l8-35ZM26 27h44L45 84ZM45 9v35L18 62m27-18 37 20M26 27l19 17 25-17"/><path d="m14 4 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z"/></svg></span><span class="station-label"><small>03 / THE LITTLE WORKSHOP</small><strong data-i18n="stationCreations">Made with love</strong><span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-arrow-up-right"></use></svg></span></span><span class="station-ring"></span></button>
       </div>
       <div class="adventure-stage">
-      <div class="mobile-panorama" aria-hidden="true"></div>
+      <img class="mobile-panorama" data-src="./assets/world/panorama.webp" alt="" aria-hidden="true" decoding="async">
       <canvas id="adventure-canvas" tabindex="0" aria-label="Move Pudding with WASD or arrows; J/K attack, Space jumps, C crouches, R revives."></canvas>
+      <div id="world-loading" class="world-loading" role="status"><span id="world-loading-text">Waking Pudding and Stoneheart…</span><button id="retry-world" hidden>Retry / 重试</button></div>
       <div class="world-caption"><span>SECTOR 01 / PUDDING NEBULA</span><span>✦</span></div>
       <div class="traveler-bubble adventure-bubble" id="adventure-bubble" data-i18n="bubble">A tiny adventure? Let's go!</div>
       <div class="actor-hud"><span class="hud-name">PUDDING / EXPLORER 001</span><output id="player-health" aria-label="Pudding health"><svg class="ui-icon health-heart" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-heart"></use></svg><svg class="ui-icon health-heart" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-heart"></use></svg><svg class="ui-icon health-heart" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-heart"></use></svg></output><span id="action-status" aria-live="polite">Idle</span></div>

@@ -64,13 +64,27 @@ export async function createAdventure({ canvas, onOpen, onUpdate, onFocus, langu
   }
   window.addEventListener('keydown', (event) => keyboard(event, true)); window.addEventListener('keyup', (event) => keyboard(event, false));
   window.addEventListener('blur', () => held.clear()); document.addEventListener('visibilitychange', () => held.clear());
-  canvas.addEventListener('pointerdown', (event) => {
+  function selectScenePoint(event) {
     if (paused) return; canvas.focus({ preventScroll: true }); const rect = canvas.getBoundingClientRect();
     const position = { x: (event.clientX - rect.left) / rect.width * 1000, y: (event.clientY - rect.top) / rect.height * 600 };
     if (stoneheart.opacity > 0 && Math.abs(position.x - npc.x) < 45 && position.y < npc.y && position.y > npc.y - 130) { onOpen('npc'); return; }
     target = { x: Math.max(200, Math.min(950, position.x)), y: Math.max(230, Math.min(520, position.y)) };
-    onFocus?.(event.clientX / innerWidth, event.clientY / innerHeight);
+    onFocus?.(innerWidth <= 760 ? position.x / 1000 : event.clientX / innerWidth, innerWidth <= 760 ? position.y / 600 : event.clientY / innerHeight);
+  }
+  // Let a finger scroll the page without sending Pudding toward Stoneheart.
+  let touchStart = null;
+  canvas.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'touch') touchStart = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    else selectScenePoint(event);
   });
+  canvas.addEventListener('pointermove', (event) => {
+    if (touchStart?.id === event.pointerId && Math.hypot(event.clientX - touchStart.x, event.clientY - touchStart.y) > 8) touchStart = null;
+  });
+  canvas.addEventListener('pointerup', (event) => {
+    if (touchStart?.id === event.pointerId && Math.hypot(event.clientX - touchStart.x, event.clientY - touchStart.y) <= 8) selectScenePoint(event);
+    touchStart = null;
+  });
+  canvas.addEventListener('pointercancel', () => { touchStart = null; });
   function spark(position, color = '#eeb2ce') { effects.push({ ...position, color, age: 0 }); }
   function strike(type) {
     spark({ x: player.x + facing * 35, y: player.y - 65 }, type === 'attack2' ? '#c4b3ef' : '#eeb2ce');

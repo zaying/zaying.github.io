@@ -18,13 +18,15 @@ export class SceneView {
   }
 }
 
-export function createSceneView({ element, canvas, reduced = false }) {
+export function createSceneView({ element, sceneElement, canvas, reduced = false }) {
   const view = new SceneView(); view.setReduced(reduced);
   let paused = true, last = 0, elapsed = 0;
   const paint = (state) => {
-    element.style.setProperty('--view-x', `${state.x.toFixed(2)}px`);
-    element.style.setProperty('--view-y', `${state.y.toFixed(2)}px`);
-    element.style.setProperty('--view-zoom', state.zoom.toFixed(4));
+    for (const layer of [element, sceneElement].filter(Boolean)) {
+      layer.style.setProperty('--view-x', `${state.x.toFixed(2)}px`);
+      layer.style.setProperty('--view-y', `${state.y.toFixed(2)}px`);
+      layer.style.setProperty('--view-zoom', state.zoom.toFixed(4));
+    }
     element.dataset.zoom = state.zoom.toFixed(3); element.dataset.focused = String(view.focused);
   };
   window.addEventListener('pointermove', (event) => {
@@ -38,7 +40,8 @@ export function createSceneView({ element, canvas, reduced = false }) {
     const dt = Math.min((time - last) / 1000 || .016, .05); last = time;
     if (paused || document.hidden || view.reduced) return;
     elapsed += dt;
-    paint(view.update(dt, { width: innerWidth, height: innerHeight, mobile: innerWidth <= 760, time: elapsed }));
+    const mobile = innerWidth <= 760;
+    paint(view.update(dt, { width: mobile ? canvas.clientWidth : innerWidth, height: mobile ? canvas.clientHeight : innerHeight, mobile, time: elapsed }));
   }
   paint({ x: 0, y: 0, zoom: view.zoom }); requestAnimationFrame(render);
   return { focus: (x, y) => view.focus(x, y), reset: () => view.reset(), pause: (value) => { paused = value; }, setReduced(value) { view.setReduced(value); if (value) paint({ x: 0, y: 0, zoom: 1.035 }); } };

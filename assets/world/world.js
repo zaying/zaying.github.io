@@ -1,5 +1,6 @@
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
+const uiIcon = (name, className = '') => `<svg class="ui-icon ${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-${name}"></use></svg>`;
 const translations = {
   en: {
     skip: 'Skip to navigation', navAbout: 'About me', navResearch: 'Research', navCreations: 'Creations', navContact: 'Say hello',
@@ -38,7 +39,7 @@ let screen = 'entrance';
 Object.assign(translations.en, {
   loading: 'Assembling your little planet…', sceneError: 'The 3D scene could not load. Your personal information is still available from the navigation above.', retry: 'Try again',
   viewOrbit: 'Orbit', viewLand: 'Land', planetLabel: 'PUDDING PLANET / A LITTLE LAB IN SPACE', challenge: 'Challenge Stoneheart', peace: 'End the duel', npcWaiting: 'Stoneheart · waiting',
-  actionsLabel: "PUDDING'S MOVES", inspect: 'Inspect the artwork ↗', inspectorTitle: 'Original frames, in full',
+  actionsLabel: "PUDDING'S MOVES", inspect: 'Inspect the artwork', inspectorTitle: 'Original frames, in full',
   actionIdle: 'Idle', actionWalk: 'Walk', actionRun: 'Run', actionJump: 'Jump', actionCrouch: 'Crouch', actionStand: 'Stand', actionAttack: 'Attack', actionAttack2: 'Burst', actionHurt: 'Hit', actionDeath: 'Die', actionRevive: 'Revive',
   actionLand: 'Landing', npcDefeated: 'Stoneheart defeated · click to restart', deadHint: 'Pudding is down · reviving in {seconds}s · press R to revive now.', revivingHint: 'Pudding is reviving and returning to safety…', victoryHint: 'Stoneheart is defeated. A little peace returns to the planet.',
   door: 'Open / close lab door', npc: 'Stoneheart', npcCopy: 'The antagonist from my original game artwork. Challenge Stoneheart to try attacks, dodging, damage, death, and revival. J / K attack, C crouches, SPACE dodges, R revives.',
@@ -46,7 +47,7 @@ Object.assign(translations.en, {
 Object.assign(translations.zh, {
   loading: '正在组装你的小小星球…', sceneError: '3D 场景暂时无法加载。你仍可从顶部导航查看个人信息。', retry: '重新加载',
   viewOrbit: '环绕星球', viewLand: '着陆', planetLabel: '布丁星球 / 宇宙中的小小实验室', challenge: '挑战石心人', peace: '结束对战', npcWaiting: '石心人 · 等待中',
-  actionsLabel: '小鼻嘎的动作', inspect: '放大查看原画 ↗', inspectorTitle: '完整原始动作帧',
+  actionsLabel: '小鼻嘎的动作', inspect: '放大查看原画', inspectorTitle: '完整原始动作帧',
   actionIdle: '呼吸', actionWalk: '行走', actionRun: '跑', actionJump: '跳', actionCrouch: '蹲', actionStand: '起身', actionAttack: '攻击', actionAttack2: '远程攻击', actionHurt: '被攻击', actionDeath: '死亡', actionRevive: '复活',
   actionLand: '降落', npcDefeated: '石心人已击败 · 点击再战', deadHint: '小鼻嘎倒下了 · {seconds} 秒后自动复活 · 按 R 提前复活。', revivingHint: '小鼻嘎正在复活，返回安全位置…', victoryHint: '石心人被击败，小小星球恢复了平静。',
   door: '开关实验室门', npc: '石心人', npcCopy: '来自我原作的反派 NPC。挑战石心人后可以体验攻击、躲避、受伤、死亡与复活。J / K 攻击，C 蹲下，空格跳跃躲避，R 复活。',
@@ -88,6 +89,9 @@ function setLanguage(next) {
   $('#motion-toggle').setAttribute('aria-label', translations[next][reduced ? 'animate' : 'reduce']);
   $('#reset-view').setAttribute('aria-label', next === 'zh' ? '恢复背景视角' : 'Reset background view');
   $('#reset-view').title = next === 'zh' ? '恢复视角 · 也可双击空白场景' : 'Reset view · or double-click the landscape';
+  const moveLabels = next === 'zh' ? { left: '向左移动', right: '向右移动', up: '向上移动', down: '向下移动' } : { left: 'Move left', right: 'Move right', up: 'Move forward', down: 'Move backward' };
+  $$('[data-move]').forEach((button) => button.setAttribute('aria-label', moveLabels[button.dataset.move]));
+  $$('[data-touch-action]').forEach((button) => button.setAttribute('aria-label', translations[next][{ jump: 'actionJump', crouch: 'actionCrouch', attack: 'actionAttack', attack2: 'actionAttack2' }[button.dataset.touchAction]]));
   if (activePanel) renderPanel(activePanel);
   universe?.setLanguage(next);
   entranceScene?.setLanguage(next);
@@ -104,7 +108,7 @@ function setMotion(next) {
   sceneView?.setReduced(next);
 }
 function renderPanel(name) {
-  $('#panel-content').innerHTML = content[language][name];
+  $('#panel-content').innerHTML = content[language][name].replaceAll('<span>↗</span>', uiIcon('arrow-up-right')).replaceAll('<span class="research-symbol">✳</span>', `<span class="research-symbol">${uiIcon('spark')}</span>`);
   $('#panel-coordinate').textContent = `TRANSMISSION / ${({ about: '01', research: '02', creations: '03', contact: '04', npc: '05', help: '00' })[name]}`;
   panel.scrollTop = 0;
 }
@@ -143,8 +147,8 @@ panel.addEventListener('cancel', (event) => { event.preventDefault(); closePanel
 panel.addEventListener('click', (event) => { const box = panel.getBoundingClientRect(); if (event.target === panel && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom)) closePanel(); });
 
 
-Object.assign(translations.en, { entryExplore: 'Explore my world', entrySubtitle: 'Discover my research & little creations', entryHint: 'Drag to orbit · scroll to zoom', explore: 'Explore my research', worldHint: 'Click a glowing station · WASD to wander · J / K to attack', controls: 'move · jump · explore', npcWaiting: 'Stoneheart · keep your distance', npcNearby: 'Stoneheart · crystal shards incoming', npcCharging: 'Stoneheart · charging crystals', npcFading: 'Stoneheart · fading away', npcDefeated: 'Stoneheart · returning in {seconds}s', npcReviving: 'Stoneheart · returning', victoryHint: 'Stoneheart is taking a little break.', sceneError: 'The 3D entrance could not load. You can still enter the illustrated world below.' });
-Object.assign(translations.zh, { entryExplore: '探索我的小世界', entrySubtitle: '看看我的研究与小小创作', entryHint: '拖动旋转 · 滚轮缩放', explore: '探索我的研究', worldHint: '点击发光站点 · WASD 漫游 · J / K 攻击', controls: '移动 · 跳跃 · 探索', npcWaiting: '石心人 · 请保持距离', npcNearby: '石心人 · 晶石碎片来袭', npcCharging: '石心人 · 晶石蓄力中', npcFading: '石心人 · 渐渐消散', npcDefeated: '石心人 · {seconds} 秒后复活', npcReviving: '石心人 · 晶石重聚中', victoryHint: '石心人暂时休息，星云安静了一会儿。', sceneError: '3D 入口暂时无法加载，仍可点击下方按钮进入原画小世界。' });
+Object.assign(translations.en, { worldHintMobile: 'Tap the scene to walk · hold arrows to move', entryExplore: 'Explore my world', entrySubtitle: 'Discover my research & little creations', entryHint: 'Drag to orbit · pinch or scroll to zoom', explore: 'Explore my research', worldHint: 'Click a glowing station · WASD to wander · J / K to attack', controls: 'move · jump · explore', npcWaiting: 'Stoneheart · keep your distance', npcNearby: 'Stoneheart · crystal shards incoming', npcCharging: 'Stoneheart · charging crystals', npcFading: 'Stoneheart · fading away', npcDefeated: 'Stoneheart · returning in {seconds}s', npcReviving: 'Stoneheart · returning', victoryHint: 'Stoneheart is taking a little break.', sceneError: 'The 3D entrance could not load. You can still enter the illustrated world below.' });
+Object.assign(translations.zh, { worldHintMobile: '轻触场景漫游 · 按住方向键移动', entryExplore: '探索我的小世界', entrySubtitle: '看看我的研究与小小创作', entryHint: '拖动旋转 · 双指或滚轮缩放', explore: '探索我的研究', worldHint: '点击发光站点 · WASD 漫游 · J / K 攻击', controls: '移动 · 跳跃 · 探索', npcWaiting: '石心人 · 请保持距离', npcNearby: '石心人 · 晶石碎片来袭', npcCharging: '石心人 · 晶石蓄力中', npcFading: '石心人 · 渐渐消散', npcDefeated: '石心人 · {seconds} 秒后复活', npcReviving: '石心人 · 晶石重聚中', victoryHint: '石心人暂时休息，星云安静了一会儿。', sceneError: '3D 入口暂时无法加载，仍可点击下方按钮进入原画小世界。' });
 content.en.npc = `<p class="panel-kicker">05 / THE ANTAGONIST</p><h2 id="panel-title">Meet Stoneheart.</h2><p class="panel-lead">A crystal guard in the nebula.</p><div class="panel-copy"><p>Approach Stoneheart and it automatically winds up, then fires a fan of crystal shards. Only a shard that hits Pudding causes damage. Jump, crouch, or step aside to dodge; retreating stops new attacks.</p><p>J / K attack, C toggles crouching and standing, SPACE jumps. Pudding automatically starts reviving 5 seconds after death; press R to revive sooner. Stoneheart fades away when defeated, stays invisible for 5 seconds, then reappears with full health. It resumes guarding once fully visible.</p></div>`;
 content.zh.npc = `<p class="panel-kicker">05 / 反派登场</p><h2 id="panel-title">石心人来了。</h2><p class="panel-lead">守在星云里的晶石反派。</p><div class="panel-copy"><p>靠近石心人时，它会自动蓄力并射出一簇晶石碎片。只有碎片命中小鼻嘎才会扣血、播放被攻击动作。跳跃、蹲下或移动躲避，退远后它会停止发射。</p><p>J / K 攻击，C 切换蹲下和起身，空格跳跃。小鼻嘎死亡 5 秒后自动开始复活，也可以按 R 提前复活。石心人被击败后逐渐变淡、完全消失，等待 5 秒后渐显并恢复满血；完全出现后才恢复警戒。</p></div>`;
 content.en.help = `<p class="panel-kicker">EXPLORER'S FIELD GUIDE</p><h2 id="panel-title">A tiny adventure.</h2><dl class="help-list"><dt>The entrance</dt><dd>Rotate and zoom the 3D cosmos. Explore my world enters this illustrated research world. The zaying logo returns to the entrance.</dd><dt><kbd>WASD</kbd> / arrows</dt><dd>Move Pudding. Left movement mirrors the original right-facing artwork.</dd><dt><kbd>SHIFT</kbd></dt><dd>Hold while moving to run.</dd><dt><kbd>SPACE</kbd> / <kbd>C</kbd></dt><dd>Jump and land / toggle crouching, including crouch walking.</dd><dt><kbd>J</kbd> / <kbd>K</kbd></dt><dd>Close attack / ranged attack in the direction Pudding faces.</dd><dt>Stoneheart</dt><dd>Approaching triggers crystal shots automatically. Hit and death animations are triggered by shard collisions.</dd><dt><kbd>R</kbd></dt><dd>Revival starts automatically 5 seconds after death, or press R to start sooner. Reversed death frames and a teleport beam return Pudding to safety with full health.</dd><dt><kbd>E</kbd> / click</dt><dd>Visit the nearest glowing station, or click a station directly. Click the landscape to walk there.</dd></dl>`;
@@ -186,7 +190,7 @@ $$('[data-move]').forEach((button) => {
   button.addEventListener('pointerdown', (event) => { event.preventDefault(); button.setPointerCapture(event.pointerId); universe?.move(button.dataset.move, true); });
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((name) => button.addEventListener(name, () => universe?.move(button.dataset.move, false)));
 });
-$('[data-interact]').addEventListener('click', () => universe?.interact());
+$('[data-interact]')?.addEventListener('click', () => universe?.interact());
 $('#open-actor-inspector').addEventListener('click', () => { $('#actor-inspector').hidden = !$('#actor-inspector').hidden; });
 $('#close-inspector').addEventListener('click', () => { $('#actor-inspector').hidden = true; });
 $('#retry-scene').addEventListener('click', () => location.reload());
@@ -198,7 +202,7 @@ function updateHUD(state) {
   status.dataset.action = state.action; status.dataset.group = state.group; status.dataset.frame = String(state.frame);
   status.dataset.reviveIn = String(Math.ceil(state.reviveIn));
   status.dataset.position = state.position.map((value) => value.toFixed(2)).join(','); status.dataset.source = state.frameSource; status.dataset.facing = String(state.facing);
-  $('#player-health').textContent = Array.from({ length: 3 }, (_, i) => i < state.hp ? '♥' : '♡').join(' ');
+  if ($('#player-health').dataset.hp !== String(state.hp)) $('#player-health').innerHTML = Array.from({ length: 3 }, (_, i) => uiIcon('heart', `health-heart${i < state.hp ? '' : ' empty'}`)).join('');
   $('#player-health').setAttribute('aria-label', language === 'zh' ? `小鼻嘎生命值 ${state.hp} / 3` : `Pudding health ${state.hp} of 3`);
   $('#player-health').dataset.hp = String(state.hp);
   const npcKey = state.npcLife === 'fading' ? 'npcFading' : state.npcLife === 'waiting' ? 'npcDefeated' : state.npcLife === 'reviving' ? 'npcReviving' : state.npcPhase === 'charge' ? 'npcCharging' : state.nearby ? 'npcNearby' : 'npcWaiting';
@@ -207,13 +211,17 @@ function updateHUD(state) {
   $('#npc-health').dataset.hp = String(state.npcHP); $('#npc-health').dataset.phase = state.npcPhase; $('.npc-hud').dataset.phase = state.npcPhase;
   $('#npc-health').dataset.life = state.npcLife; $('#npc-health').dataset.opacity = state.npcOpacity.toFixed(2); $('#npc-health').dataset.reviveIn = String(Math.ceil(state.npcReviveIn));
   $$('[data-action]').forEach((button) => { button.setAttribute('aria-pressed', String(button.dataset.action === state.action)); button.disabled = ['stand', 'revive'].includes(state.action) || (state.dead ? button.dataset.action !== 'revive' : button.dataset.action === 'revive'); });
-  const hintText = state.action === 'revive' ? translations[language].revivingHint : state.dead ? translations[language].deadHint.replace('{seconds}', Math.ceil(state.reviveIn)) : state.npcHP === 0 ? translations[language].victoryHint : translations[language].worldHint;
+  const hintText = state.action === 'revive' ? translations[language].revivingHint : state.dead ? translations[language].deadHint.replace('{seconds}', Math.ceil(state.reviveIn)) : state.npcHP === 0 ? translations[language].victoryHint : translations[language][innerWidth <= 760 ? 'worldHintMobile' : 'worldHint'];
   if (hint.textContent !== hintText) hint.textContent = hintText;
 }
 
+const mobileLayout = matchMedia('(max-width: 760px)');
+function syncMovesLayout() { const open = !mobileLayout.matches; $('.action-dock').classList.toggle('moves-open', open); $('#toggle-actions').setAttribute('aria-expanded', String(open)); }
+mobileLayout.addEventListener('change', syncMovesLayout); syncMovesLayout();
+$('#toggle-actions').addEventListener('click', () => { if (!mobileLayout.matches) return; const open = $('.action-dock').classList.toggle('moves-open'); $('#toggle-actions').setAttribute('aria-expanded', String(open)); });
 setMotion(reduced); setLanguage(language); returnToEntrance(false); syncRoute();
-import('./scene-view.js').then(({ createSceneView }) => { sceneView = createSceneView({ element: $('#cosmos'), canvas: $('#adventure-canvas'), reduced }); sceneView.pause(screen !== 'world' || panel.open); }).catch(console.error);
-import('./adventure-scene.js').then(({ createAdventure }) => createAdventure({ canvas: $('#adventure-canvas'), language, onOpen: openPanel, onUpdate: updateHUD, onFocus: (x, y) => sceneView?.focus(x, y) })).then((result) => { universe = result; universe.setLanguage(language); universe.pause(screen !== 'world' || panel.open); }).catch((error) => { console.error(error); hint.textContent = language === 'zh' ? '角色素材加载失败，请刷新重试。' : 'Artwork could not load. Please refresh.'; });
+import('./scene-view.js?v=mobile-20260928').then(({ createSceneView }) => { sceneView = createSceneView({ element: $('#cosmos'), sceneElement: $('.adventure-stage'), canvas: $('#adventure-canvas'), reduced }); sceneView.pause(screen !== 'world' || panel.open); }).catch(console.error);
+import('./adventure-scene.js?v=mobile-20260928').then(({ createAdventure }) => createAdventure({ canvas: $('#adventure-canvas'), language, onOpen: openPanel, onUpdate: updateHUD, onFocus: (x, y) => sceneView?.focus(x, y) })).then((result) => { universe = result; universe.setLanguage(language); universe.pause(screen !== 'world' || panel.open); }).catch((error) => { console.error(error); hint.textContent = language === 'zh' ? '角色素材加载失败，请刷新重试。' : 'Artwork could not load. Please refresh.'; });
 import('./planet-scene.js').then(({ createUniverse }) => createUniverse({
   mount: $('#scene-host'), language, reduced, introOnly: true,
   onProgress(progress) { $('#scene-loading span:last-child').textContent = `${translations[language].loading} ${Math.round(progress * 100)}%`; },

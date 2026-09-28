@@ -299,7 +299,7 @@ export async function createUniverse({ mount, onOpen, onUpdate, onProgress, lang
     previewContext.clearRect(0, 0, preview.width, preview.height);
     const image = entry.image; const ratio = Math.min((preview.width - 36) / image.width, (preview.height - 35) / image.height);
     previewContext.drawImage(image, (preview.width - image.width * ratio) / 2, (preview.height - image.height * ratio) / 2, image.width * ratio, image.height * ratio);
-    document.querySelector('#frame-name').textContent = `${frame.group} / ${String(frame.index + 1).padStart(2, '0')} · ${frame.source.split('\\').pop()}`;
+    document.querySelector('#frame-name').textContent = `${frame.group} / ${String(frame.index + 1).padStart(2, '0')}`;
   }
 
   function clampToPlanet(position) { const length = Math.hypot(position.x, position.z); if (length > RADIUS - .25) { position.x *= (RADIUS - .25) / length; position.z *= (RADIUS - .25) / length; } }

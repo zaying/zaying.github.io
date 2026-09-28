@@ -236,7 +236,7 @@ function ensureWorld() {
     if (!sceneView) sceneView = createSceneView({ element: $('#cosmos'), sceneElement: $('.adventure-stage'), canvas: $('#adventure-canvas'), reduced });
     sceneView.pause(screen !== 'world' || panel.open);
   }).catch(console.error);
-  worldPromise = import('./adventure-scene.js?v=fast-20260928').then(({ createAdventure }) => createAdventure({ canvas: $('#adventure-canvas'), language, onOpen: openPanel, onUpdate: updateHUD, onFocus: (x, y) => sceneView?.focus(x, y) })).then((result) => {
+  worldPromise = import('./adventure-scene.js?v=artwork-20260928').then(({ createAdventure }) => createAdventure({ canvas: $('#adventure-canvas'), language, onOpen: openPanel, onUpdate: updateHUD, onFocus: (x, y) => sceneView?.focus(x, y) })).then((result) => {
     universe = result; universe.setLanguage(language); universe.pause(screen !== 'world' || panel.open); status.hidden = true;
   }).catch((error) => {
     console.error(error); worldPromise = null; $('#retry-world').hidden = false;
@@ -247,7 +247,7 @@ function ensureWorld() {
 $('#retry-world').addEventListener('click', ensureWorld);
 function ensureEntrance() {
   if (entrancePromise) return entrancePromise;
-  entrancePromise = import('./planet-scene.js?v=fast-20260928').then(({ createUniverse }) => createUniverse({
+  entrancePromise = import('./planet-scene.js?v=artwork-20260928').then(({ createUniverse }) => createUniverse({
   mount: $('#scene-host'), language, reduced, introOnly: true,
   onProgress(progress) { $('#scene-loading span:last-child').textContent = `${translations[language].loading} ${Math.round(progress * 100)}%`; },
 })).then((result) => {

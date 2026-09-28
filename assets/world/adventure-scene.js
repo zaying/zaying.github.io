@@ -38,7 +38,7 @@ export async function createAdventure({ canvas, onOpen, onUpdate, onFocus, langu
     const [x, y, w, h] = frame.crop, scale = Math.min((preview.width - 36) / w, (preview.height - 36) / h);
     previewCtx.save(); previewCtx.translate(preview.width / 2, preview.height / 2); previewCtx.scale(facing, 1);
     previewCtx.drawImage(images.get(frame.src), -w * scale / 2, -h * scale / 2, w * scale, h * scale); previewCtx.restore();
-    document.querySelector('#frame-name').textContent = `${requested.group} / ${requested.index + 1} · ${frame.source.split('\\').pop()}`;
+    document.querySelector('#frame-name').textContent = `${requested.group} / ${String(requested.index + 1).padStart(2, '0')}`;
   }
   function action(name, demo = false) {
     if (['hurt', 'death'].includes(name)) return false;

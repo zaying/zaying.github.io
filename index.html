@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10141f">
+  <meta name="description" content="Wang Jiaying (王佳影), Ph.D. student at the Software Institute, Nanjing University. AI4Health, medical EEG, millimeter-wave radar heart-rate estimation, and trustworthy AI for incomplete physiological and biological signals.">
+  <title>Zaying · A little universe</title>
+  <link rel="icon" href="./assets/world/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="./assets/world/panorama.png" as="image">
+  <link rel="stylesheet" href="./assets/world/world.css">
+  <script type="importmap">{"imports":{"three":"./assets/world/vendor/three.module.js"}}</script>
+  <script src="./assets/world/world.js" defer></script>
+</head>
+<body data-screen="entrance">
+  <a class="skip-link" href="#navigation" data-i18n="skip">Skip to navigation</a>
+  <div class="cosmos" id="cosmos" aria-hidden="true">
+    <div class="landscape"></div><div class="color-wash"></div><div class="stars" id="stars"></div>
+    <div class="meteors" aria-hidden="true"><span class="meteor meteor-one"></span><span class="meteor meteor-two"></span><span class="meteor meteor-three"></span><span class="meteor meteor-four"></span><span class="meteor meteor-five"></span><span class="meteor meteor-six"></span><span class="meteor meteor-seven"></span><span class="meteor meteor-eight"></span><span class="meteor meteor-nine"></span></div>
+    <div class="planet"><span></span></div>
+    <svg class="orbit-lines" viewBox="0 0 1440 900" preserveAspectRatio="none"><path d="M-100 680 Q650 40 1550 510"/><path d="M-100 720 Q850 200 1550 680"/><circle cx="1190" cy="173" r="160"/></svg>
+  </div>
+
+  <header class="header">
+    <a class="wordmark" href="#" aria-label="Zaying, return to the world"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 19.5 12.5 30 16 19.5 19.5 16 30 12.5 19.5 2 16 12.5 12.5Z"/></svg><span>zaying<span class="wordmark-dot">.</span></span><small>PERSONAL ORBIT</small></a>
+    <nav class="top-nav" id="navigation" aria-label="Main navigation">
+      <button data-open="about" data-i18n="navAbout">About me</button>
+      <button data-open="research" data-i18n="navResearch">Research</button>
+      <button data-open="creations" data-i18n="navCreations">Creations</button>
+      <button data-open="contact" class="contact-nav"><span data-i18n="navContact">Say hello</span><span aria-hidden="true">↗</span></button>
+    </nav>
+    <div class="header-controls"><button class="icon-button" id="reset-view" aria-label="Reset background view" title="Reset background view" hidden>⌖</button><button class="icon-button" id="motion-toggle" aria-label="Reduce animation" aria-pressed="false">◌</button><button class="language-button" id="language-toggle" aria-label="切换为中文">中文</button></div>
+  </header>
+
+  <section class="entrance" id="entrance" aria-label="3D universe entrance">
+    <div id="scene-host" class="scene-host" aria-label="Rotatable and zoomable miniature planet"></div>
+    <div class="scene-loading" id="scene-loading" role="status"><span class="loading-orbit">✳</span><span data-i18n="loading">Assembling your little planet…</span></div>
+    <div class="scene-error" id="scene-error" hidden><p data-i18n="sceneError">The 3D scene could not load.</p><button id="retry-scene" data-i18n="retry">Try again</button></div>
+    <div class="entry-coordinate">SECTOR 01 / PUDDING'S LITTLE COSMOS</div>
+    <div class="camera-tools" aria-label="Entrance camera controls">
+      <button data-camera="left" aria-label="Rotate camera left">↶</button><button data-camera="right" aria-label="Rotate camera right">↷</button>
+      <button data-camera="in" aria-label="Zoom in">＋</button><button data-camera="out" aria-label="Zoom out">−</button><button data-camera="reset" aria-label="Reset camera">⌂</button>
+    </div>
+    <div id="scene-labels" hidden></div>
+    <button class="entry-explore" id="enter-world"><span class="entry-icon" aria-hidden="true">↪</span><span><strong data-i18n="entryExplore">Explore my world</strong><small data-i18n="entrySubtitle">Discover my research & little creations</small></span><span aria-hidden="true">↗</span></button>
+    <p class="entry-hint" data-i18n="entryHint">Drag to orbit · scroll to zoom</p>
+  </section>
+
+  <main id="main" hidden>
+    <section class="intro" aria-labelledby="hero-title">
+      <p class="eyebrow"><span class="status-dot"></span><span data-i18n="eyebrow">HELLO, EARTHLING. I'M ZAYING.</span></p>
+      <h1 id="hero-title"><span data-i18n="title1">A little world</span><br><em data-i18n="title2">Outside of time.</em><span class="title-star" aria-hidden="true">✳</span></h1>
+      <p class="intro-copy" data-i18n="intro">Exploring AI for health, making things by hand,<br>and leaving a little room for wonder.</p>
+      <button class="primary-button" id="explore"><span data-i18n="explore">Explore my universe</span><span aria-hidden="true">↗</span></button>
+      <button class="text-button" data-open="about"><span data-i18n="read">Or, get to know me</span><span aria-hidden="true">→</span></button>
+    </section>
+
+    <section class="world" id="world" tabindex="0" aria-label="Interactive hand-drawn universe">
+      <canvas id="adventure-canvas" tabindex="0" aria-label="Move Pudding with WASD or arrows; J/K attack, Space jumps, C crouches, R revives."></canvas>
+      <div class="world-caption"><span>SECTOR 01 / PUDDING NEBULA</span><span>✦</span></div>
+      <button class="station station-about" data-open="about" style="--x:28;--y:86;--station-color:var(--pink)"><span class="station-object"><svg viewBox="0 0 90 90" aria-hidden="true"><path d="M23 78V40a22 22 0 0 1 44 0v38M31 78V40a14 14 0 0 1 28 0v38M18 78h54M45 7v12M9 43h12M69 43h12"/><circle cx="50" cy="53" r="2"/><path d="m14 13 3 7 7 3-7 3-3 7-3-7-7-3 7-3Z"/></svg></span><span class="station-label"><small>01 / THE OBSERVATORY</small><strong data-i18n="stationAbout">My story</strong><span>↗</span></span><span class="station-ring"></span></button>
+      <button class="station station-research" data-open="research" style="--x:60;--y:40;--station-color:var(--mint)"><span class="station-object"><svg viewBox="0 0 90 90" aria-hidden="true"><circle cx="45" cy="43" r="30" stroke-dasharray="4 5"/><path d="M28 15h34v9H28ZM23 48l9-20h26l10 20-12 20H34ZM28 75h34v9H28Z"/><path d="M27 46h11l4-12 7 24 5-12h10"/></svg></span><span class="station-label"><small>02 / THE RESEARCH LAB</small><strong data-i18n="stationResearch">Curiosity lab</strong><span>↗</span></span><span class="station-ring"></span></button>
+      <button class="station station-creations" data-open="creations" style="--x:88;--y:58;--station-color:var(--lavender)"><span class="station-object"><svg viewBox="0 0 90 90" aria-hidden="true"><path d="m45 9 25 18 12 37-37 20L18 62l8-35ZM26 27h44L45 84ZM45 9v35L18 62m27-18 37 20M26 27l19 17 25-17"/><path d="m14 4 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z"/></svg></span><span class="station-label"><small>03 / THE LITTLE WORKSHOP</small><strong data-i18n="stationCreations">Made with love</strong><span>↗</span></span><span class="station-ring"></span></button>
+      <div class="traveler-bubble adventure-bubble" id="adventure-bubble" data-i18n="bubble">A tiny adventure? Let's go!</div>
+      <div class="actor-hud"><span class="hud-name">PUDDING / EXPLORER 001</span><output id="player-health" aria-label="Pudding health">♥ ♥ ♥</output><span id="action-status" aria-live="polite">Idle</span></div>
+      <div class="npc-hud"><span id="npc-health" data-i18n="npcWaiting">Stoneheart · keep your distance</span></div>
+      <div class="action-dock" aria-label="Character actions">
+        <div class="action-dock-top"><span data-i18n="actionsLabel">PUDDING'S MOVES</span><button id="open-actor-inspector" data-i18n="inspect">Inspect the artwork ↗</button></div>
+        <div class="action-buttons">
+          <button data-action="idle"><span data-i18n="actionIdle">Idle</span></button>
+          <button data-action="walk"><kbd>WASD</kbd><span data-i18n="actionWalk">Walk</span></button>
+          <button data-action="run"><kbd>SHIFT</kbd><span data-i18n="actionRun">Run</span></button>
+          <button data-action="jump"><kbd>SPACE</kbd><span data-i18n="actionJump">Jump</span></button>
+          <button data-action="crouch"><kbd>C</kbd><span data-i18n="actionCrouch">Crouch</span></button>
+          <button data-action="attack"><kbd>J</kbd><span data-i18n="actionAttack">Attack</span></button>
+          <button data-action="attack2"><kbd>K</kbd><span data-i18n="actionAttack2">Burst</span></button>
+          <button data-action="revive"><kbd>R</kbd><span data-i18n="actionRevive">Revive</span></button>
+        </div>
+      </div>
+      <div class="explore-hint" id="explore-hint" role="status" aria-live="polite" data-i18n="worldHint">Drag to orbit · scroll to zoom · click a destination</div>
+      <aside class="actor-inspector" id="actor-inspector" hidden aria-label="Original artwork preview">
+        <div><span data-i18n="inspectorTitle">Original frames, in full</span><button id="close-inspector" aria-label="Close artwork preview">✕</button></div>
+        <canvas id="actor-preview" width="600" height="440" aria-label="Current full character frame"></canvas><small id="frame-name"></small>
+      </aside>
+    </section>
+
+    <div class="field-note"><span class="note-spark" aria-hidden="true">✧</span><p data-i18n="note">Somewhere between<br>science & a daydream.</p><small>EST. ON EARTH · WANDERING IN SPACE</small></div>
+    <div class="touch-controls" aria-label="Character controls"><button data-move="left" aria-label="Move left">←</button><button data-move="up" aria-label="Move forward">↑</button><button data-move="down" aria-label="Move backward">↓</button><button data-move="right" aria-label="Move right">→</button><button data-touch-action="jump" aria-label="Jump">⤴</button><button data-touch-action="attack" aria-label="Attack">⚔</button><button data-interact aria-label="Open nearby destination">E</button></div>
+  </main>
+
+  <footer class="footer" hidden>
+    <div class="connection"><span class="status-dot"></span><span data-i18n="connection">YOU'VE LANDED IN ZAYING'S UNIVERSE</span></div>
+    <button class="controls-hint" id="help-button"><span class="keycaps"><kbd>←</kbd><kbd>→</kbd><kbd>SPACE</kbd></span><span data-i18n="controls">move · jump</span><span class="help-circle">?</span></button>
+    <button class="sound-note" data-open="contact"><span aria-hidden="true">✦</span><span data-i18n="footerContact">Let's make something good</span><span aria-hidden="true">↗</span></button>
+  </footer>
+
+  <dialog id="panel" aria-labelledby="panel-title">
+    <div class="panel-top"><span id="panel-coordinate">TRANSMISSION / 01</span><button id="close-panel" class="icon-button" aria-label="Close panel">✕</button></div>
+    <div id="panel-content"></div>
+    <div class="panel-bottom"><span>✦ ZAYING'S PERSONAL ORBIT</span><button id="back-world"><span data-i18n="back">Back to the universe</span> ↗</button></div>
+  </dialog>
+  <noscript><div class="no-script">Welcome, I'm Wang Jiaying (王佳影), a Ph.D. student at the Software Institute, Nanjing University, working on AI4Health. <a href="https://nju-slab.cn/">Research group</a> · <a href="mailto:wangjiaying@smail.nju.edu.cn">Email</a>. Enable JavaScript to explore the interactive world.</div></noscript>
+</body>
+</html>

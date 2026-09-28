@@ -82,12 +82,12 @@ analytics:
 author:
   name             : "Wang Jiaying"
   avatar           : "profile.jpg"
-  bio              : "PhD student"
+  bio              : "Ph.D. student · Software Institute, Nanjing University"
   location         : "China"
-  employer         :
+  employer         : "Nanjing University"
   pubmed           :  # "https://www.ncbi.nlm.nih.gov/pubmed/?term=john+snow"
   googlescholar    :  "https://scholar.google.com/citations?user=Id8HMRgAAAAJ&hl=zh-CN"
-  email            :  jiaying.wang.2301@student.lu.se
+  email            :  wangjiaying@smail.nju.edu.cn
   researchgate     :  # example: "https://www.researchgate.net/profile/yourprofile"
   uri              :
   bitbucket        :
@@ -120,9 +120,15 @@ author:
 # Reading Files
 include:
   - .htaccess
-  - _pages
   - files
 exclude:
+  - _pages
+  - _posts
+  - _publications
+  - _talks
+  - _teaching
+  - _portfolio
+  - talkmap
   - "*.sublime-project"
   - "*.sublime-workspace"
   - .asset-cache
@@ -144,6 +150,10 @@ exclude:
   - log
   - node_modules
   - package.json
+  - package-lock.json
+  - scripts
+  - LOCAL-DEVELOPMENT.md
+  - local
   - tmp
   - vendor
 keep_files:

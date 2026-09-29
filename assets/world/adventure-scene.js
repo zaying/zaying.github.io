@@ -73,7 +73,8 @@ export async function createAdventure({ canvas, onOpen, onUpdate, onFocus, langu
     const position = { x: (event.clientX - rect.left) / rect.width * 1000, y: (event.clientY - rect.top) / rect.height * 600 };
     if (stoneheart.opacity > 0 && Math.abs(position.x - npc.x) < 45 && position.y < npc.y && position.y > npc.y - 130) { onOpen('npc'); return; }
     target = { x: Math.max(200, Math.min(950, position.x)), y: Math.max(230, Math.min(520, position.y)) };
-    onFocus?.(innerWidth <= 760 ? position.x / 1000 : event.clientX / innerWidth, innerWidth <= 760 ? position.y / 600 : event.clientY / innerHeight);
+    const contained = matchMedia('(max-width:1360px), (max-height:820px)').matches;
+    onFocus?.(contained ? position.x / 1000 : event.clientX / innerWidth, contained ? position.y / 600 : event.clientY / innerHeight);
   }
   // Let a finger scroll the page without sending Pudding toward Stoneheart.
   let touchStart = null;

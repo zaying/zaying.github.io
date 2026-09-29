@@ -36,6 +36,7 @@ let universe = null;
 let entranceScene = null;
 let sceneView = null;
 let screen = 'entrance';
+const phoneLayout = matchMedia('(max-width:760px)');
 let worldPromise = null;
 let entrancePromise = null;
 Object.assign(translations.en, {
@@ -179,7 +180,7 @@ function returnToEntrance(updateHash = true) {
 function syncRoute() { const name = location.hash.slice(1); if (content[language][name]) openPanel(name, false); else if (name === 'world') { enterWorld(false); closePanel(false); } else if (!name) returnToEntrance(false); }
 window.addEventListener('hashchange', syncRoute); window.addEventListener('popstate', syncRoute);
 $('.wordmark').addEventListener('click', (event) => { event.preventDefault(); returnToEntrance(); });
-function startExplore() { enterWorld(); if (innerWidth <= 760) world.scrollIntoView({ behavior: reduced ? 'instant' : 'smooth', block: 'center' }); }
+function startExplore() { enterWorld(); if (phoneLayout.matches) world.scrollIntoView({ behavior: reduced ? 'instant' : 'smooth', block: 'center' }); }
 $('#enter-world').addEventListener('click', () => enterWorld());
 $('#explore').addEventListener('click', () => openPanel('research'));
 $$('[data-action]').forEach((button) => button.addEventListener('click', () => universe?.action(button.dataset.action, true)));
@@ -215,14 +216,14 @@ function updateHUD(state) {
   $('#npc-health').dataset.hp = String(state.npcHP); $('#npc-health').dataset.phase = state.npcPhase; $('.npc-hud').dataset.phase = state.npcPhase;
   $('#npc-health').dataset.life = state.npcLife; $('#npc-health').dataset.opacity = state.npcOpacity.toFixed(2); $('#npc-health').dataset.reviveIn = String(Math.ceil(state.npcReviveIn));
   $$('[data-action]').forEach((button) => { button.setAttribute('aria-pressed', String(button.dataset.action === state.action)); button.disabled = ['stand', 'revive'].includes(state.action) || (state.dead ? button.dataset.action !== 'revive' : button.dataset.action === 'revive'); });
-  const hintText = state.action === 'revive' ? translations[language].revivingHint : state.dead ? translations[language].deadHint.replace('{seconds}', Math.ceil(state.reviveIn)) : state.npcHP === 0 ? translations[language].victoryHint : translations[language][innerWidth <= 760 ? 'worldHintMobile' : 'worldHint'];
+  const hintText = state.action === 'revive' ? translations[language].revivingHint : state.dead ? translations[language].deadHint.replace('{seconds}', Math.ceil(state.reviveIn)) : state.npcHP === 0 ? translations[language].victoryHint : translations[language][phoneLayout.matches ? 'worldHintMobile' : 'worldHint'];
   if (hint.textContent !== hintText) hint.textContent = hintText;
 }
 
-const mobileLayout = matchMedia('(max-width: 760px)');
-function syncMovesLayout() { const open = !mobileLayout.matches; $('.action-dock').classList.toggle('moves-open', open); $('#toggle-actions').setAttribute('aria-expanded', String(open)); }
-mobileLayout.addEventListener('change', syncMovesLayout); syncMovesLayout();
-$('#toggle-actions').addEventListener('click', () => { if (!mobileLayout.matches) return; const open = $('.action-dock').classList.toggle('moves-open'); $('#toggle-actions').setAttribute('aria-expanded', String(open)); });
+const compactControls = matchMedia('(max-width:1360px), (max-height:820px)');
+function syncMovesLayout() { const open = !compactControls.matches; $('.action-dock').classList.toggle('moves-open', open); $('#toggle-actions').setAttribute('aria-expanded', String(open)); }
+compactControls.addEventListener('change', syncMovesLayout); syncMovesLayout();
+$('#toggle-actions').addEventListener('click', () => { if (!compactControls.matches) return; const open = $('.action-dock').classList.toggle('moves-open'); $('#toggle-actions').setAttribute('aria-expanded', String(open)); });
 function ensureWorld() {
   if (worldPromise) return worldPromise;
   const status = $('#world-loading'); status.hidden = false; $('#retry-world').hidden = true;
@@ -232,11 +233,11 @@ function ensureWorld() {
     panorama.addEventListener('error', () => { if (!panorama.src.endsWith('panorama.png')) panorama.src = './assets/world/panorama.png'; });
     panorama.src = panorama.dataset.src;
   }
-  import('./scene-view.js?v=fast-20260928').then(({ createSceneView }) => {
+  import('./scene-view.js?v=landscape-20260929').then(({ createSceneView }) => {
     if (!sceneView) sceneView = createSceneView({ element: $('#cosmos'), sceneElement: $('.adventure-stage'), canvas: $('#adventure-canvas'), reduced });
     sceneView.pause(screen !== 'world' || panel.open);
   }).catch(console.error);
-  worldPromise = import('./adventure-scene.js?v=artwork-20260928').then(({ createAdventure }) => createAdventure({ canvas: $('#adventure-canvas'), language, onOpen: openPanel, onUpdate: updateHUD, onFocus: (x, y) => sceneView?.focus(x, y) })).then((result) => {
+  worldPromise = import('./adventure-scene.js?v=landscape-20260929').then(({ createAdventure }) => createAdventure({ canvas: $('#adventure-canvas'), language, onOpen: openPanel, onUpdate: updateHUD, onFocus: (x, y) => sceneView?.focus(x, y) })).then((result) => {
     universe = result; universe.setLanguage(language); universe.pause(screen !== 'world' || panel.open); status.hidden = true;
   }).catch((error) => {
     console.error(error); worldPromise = null; $('#retry-world').hidden = false;

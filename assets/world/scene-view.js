@@ -40,7 +40,7 @@ export function createSceneView({ element, sceneElement, canvas, reduced = false
     const dt = Math.min((time - last) / 1000 || .016, .05); last = time;
     if (paused || document.hidden || view.reduced) return;
     elapsed += dt;
-    const mobile = innerWidth <= 760;
+    const mobile = matchMedia('(max-width:1360px), (max-height:820px)').matches;
     paint(view.update(dt, { width: mobile ? canvas.clientWidth : innerWidth, height: mobile ? canvas.clientHeight : innerHeight, mobile, time: elapsed }));
   }
   paint({ x: 0, y: 0, zoom: view.zoom }); requestAnimationFrame(render);

@@ -136,6 +136,7 @@ body.returning-to-planet{cursor:wait}
 .friends-section h3{font:18px Georgia,'Microsoft YaHei',serif;font-weight:400;color:#d2e9e3;margin:0 0 16px}
 .friend-card{display:flex;align-items:center;gap:16px;padding:16px;border:1px solid #b4eddf30;border-radius:12px;background:#b4eddf04;transition:background .2s,border-color .2s}
 .friend-card:hover{background:#b4eddf0b;border-color:#b4eddf70}
+.friend-card+.friend-card{margin-top:12px}
 .friend-mark{display:grid;place-items:center;width:46px;height:46px;flex:none;border:1px solid #b4eddf30;border-radius:12px;color:var(--mint);font-size:18px;font-weight:700}
 .friend-copy{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
 .friend-copy strong{font-size:14px;font-weight:500;color:#e0e8ed}

@@ -39,6 +39,7 @@ let screen = 'entrance';
 const phoneLayout = matchMedia('(max-width:760px)');
 let worldPromise = null;
 let entrancePromise = null;
+let planetFlight = null;
 Object.assign(translations.en, {
   loading: 'Assembling your little planet…', sceneError: 'The 3D scene could not load. Your personal information is still available from the navigation above.', retry: 'Try again',
   viewOrbit: 'Orbit', viewLand: 'Land', planetLabel: 'PUDDING PLANET / A LITTLE LAB IN SPACE', challenge: 'Challenge Stoneheart', peace: 'End the duel', npcWaiting: 'Stoneheart · waiting',
@@ -57,6 +58,7 @@ Object.assign(translations.zh, {
 });
 
 const scholar = 'https://scholar.google.com/citations?user=Id8HMRgAAAAJ&hl=zh-CN';
+const orcid = 'https://orcid.org/0009-0003-7022-5563';
 const external = 'target="_blank" rel="noopener noreferrer"';
 const content = {
   en: {
@@ -80,6 +82,14 @@ const content = {
   },
 };
 
+const orcidMark = `<svg class="orcid-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#a6ce39"/><circle cx="7.1" cy="6.7" r="1.2" fill="white"/><path fill="white" d="M6 9h2.2v9H6zm4.2 0h3.5c6.2 0 6.2 9 0 9h-3.5zm2.2 2v5h1.3c3.5 0 3.5-5 0-5z"/></svg>`;
+for (const lang of ['en', 'zh']) {
+  content[lang].research = content[lang].research.replace('<a class="panel-action"', '<div class="panel-actions"><a class="panel-action"') + `<a class="panel-action secondary-action orcid-link" href="${orcid}" ${external} aria-label="ORCID 0009-0003-7022-5563">${orcidMark}<span>${lang === 'zh' ? '查看 ORCID' : 'View ORCID'}</span>${uiIcon('arrow-up-right')}</a></div>`;
+  content[lang].contact += `<section class="friends-section" aria-labelledby="friends-title"><h3 id="friends-title">${lang === 'zh' ? 'Friends · 星际邻居' : 'Friends'}</h3><a class="friend-card" href="https://dongchenmiao.github.io/" ${external}><span class="friend-mark" aria-hidden="true">YC.</span><span class="friend-copy"><strong>iTong Slab</strong><small>dongchenmiao.github.io</small></span>${uiIcon('arrow-up-right')}</a></section>`;
+}
+Object.assign(translations.en, { returnPlanet: 'Back to my little planet', planetWhisper: 'a way home', titleReturn: 'Return to the little planet' });
+Object.assign(translations.zh, { returnPlanet: '回到我的小星球', planetWhisper: '回到小星球', titleReturn: '回到小星球' });
+
 function setLanguage(next) {
   language = next;
   saveSetting('zaying-language', next);
@@ -92,6 +102,9 @@ function setLanguage(next) {
   $('#motion-toggle').setAttribute('aria-label', translations[next][reduced ? 'animate' : 'reduce']);
   $('#reset-view').setAttribute('aria-label', next === 'zh' ? '恢复背景视角' : 'Reset background view');
   $('#reset-view').title = next === 'zh' ? '恢复视角 · 也可双击空白场景' : 'Reset view · or double-click the landscape';
+  $('#planet-return').setAttribute('aria-label', translations[next].returnPlanet);
+  $('#hero-title').setAttribute('aria-label', `${translations[next].title1} ${translations[next].title2}`);
+  $('#title-return').setAttribute('aria-label', `${translations[next].title1} ${translations[next].title2} — ${translations[next].titleReturn}`);
   const moveLabels = next === 'zh' ? { left: '向左移动', right: '向右移动', up: '向上移动', down: '向下移动' } : { left: 'Move left', right: 'Move right', up: 'Move forward', down: 'Move backward' };
   $$('[data-move]').forEach((button) => button.setAttribute('aria-label', moveLabels[button.dataset.move]));
   $$('[data-touch-action]').forEach((button) => button.setAttribute('aria-label', translations[next][{ jump: 'actionJump', crouch: 'actionCrouch', attack: 'actionAttack', attack2: 'actionAttack2' }[button.dataset.touchAction]]));
@@ -161,6 +174,7 @@ content.zh.creations = content.zh.creations.replace('原来的呼吸与行走动
 
 function enterWorld(updateHash = true) {
   screen = 'world'; document.body.dataset.screen = screen;
+  syncReturnTargets();
   $('#entrance').hidden = true; $('#main').hidden = false; $('.footer').hidden = false; $('#cosmos').hidden = false; $('.top-nav').hidden = false;
   entranceScene?.pause(true); universe?.pause(panel.open); window.scrollTo(0, 0);
   $('#reset-view').hidden = false; sceneView?.pause(panel.open);
@@ -170,6 +184,7 @@ function enterWorld(updateHash = true) {
 }
 function returnToEntrance(updateHash = true) {
   closePanel(false); screen = 'entrance'; document.body.dataset.screen = screen;
+  syncReturnTargets();
   $('#entrance').hidden = false; $('#main').hidden = true; $('.footer').hidden = true; $('#cosmos').hidden = true; $('.top-nav').hidden = true;
   universe?.pause(true); entranceScene?.pause(false); window.scrollTo(0, 0);
   $('#reset-view').hidden = true; sceneView?.reset(); sceneView?.pause(true);
@@ -177,9 +192,67 @@ function returnToEntrance(updateHash = true) {
   if (updateHash) history.pushState(null, '', location.pathname + location.search);
   $('#enter-world').focus({ preventScroll: true });
 }
-function syncRoute() { const name = location.hash.slice(1); if (content[language][name]) openPanel(name, false); else if (name === 'world') { enterWorld(false); closePanel(false); } else if (!name) returnToEntrance(false); }
+function syncRoute() { cancelPlanetFlight(); const name = location.hash.slice(1); if (content[language][name]) openPanel(name, false); else if (name === 'world') { enterWorld(false); closePanel(false); } else if (!name) returnToEntrance(false); }
 window.addEventListener('hashchange', syncRoute); window.addEventListener('popstate', syncRoute);
 $('.wordmark').addEventListener('click', (event) => { event.preventDefault(); returnToEntrance(); });
+function syncReturnTargets() {
+  const planet = $('#planet-return');
+  planet.hidden = screen !== 'world'; planet.disabled = phoneLayout.matches;
+  planet.tabIndex = phoneLayout.matches ? -1 : 0;
+  planet.setAttribute('aria-hidden', String(phoneLayout.matches));
+  $('#title-return').disabled = !phoneLayout.matches;
+}
+phoneLayout.addEventListener('change', syncReturnTargets);
+function cancelPlanetFlight() {
+  if (!planetFlight) return;
+  planetFlight.cancelled = true;
+  for (const animation of planetFlight.animations) animation.cancel();
+  $('#planet-portal').hidden = true; $('#planet-portal').replaceChildren();
+  document.body.classList.remove('returning-to-planet'); planetFlight = null;
+  universe?.pause(screen !== 'world' || panel.open); sceneView?.pause(screen !== 'world' || panel.open);
+}
+async function flyToPlanet(control) {
+  if (screen !== 'world' || planetFlight) return;
+  if (reduced || typeof control.animate !== 'function') { returnToEntrance(); return; }
+  const portal = $('#planet-portal'), rect = control.getBoundingClientRect();
+  const flight = { animations: [], cancelled: false }; planetFlight = flight;
+  universe?.pause(true); sceneView?.pause(true); ensureEntrance();
+  portal.style.setProperty('--portal-x', `${rect.left + rect.width / 2}px`);
+  portal.style.setProperty('--portal-y', `${rect.top + rect.height / 2}px`);
+  portal.hidden = false; portal.dataset.phase = 'depart';
+  document.body.classList.add('returning-to-planet');
+  const departure = { duration: 620, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'forwards' };
+  for (const layer of [$('#cosmos'), $('#world')]) {
+    const box = layer.getBoundingClientRect();
+    layer.style.transformOrigin = `${rect.left + rect.width / 2 - box.left}px ${rect.top + rect.height / 2 - box.top}px`;
+    flight.animations.push(layer.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.028)', opacity: 0 }], departure));
+  }
+  for (const layer of [$('.intro'), $('.field-note'), $('.header'), $('.footer')]) {
+    flight.animations.push(layer.animate([{ opacity: 1 }, { opacity: 0 }], departure));
+  }
+  if (control.id === 'planet-return') {
+    const transform = getComputedStyle(control).transform;
+    flight.animations.push(control.animate([{ transform, opacity: .65 }, { transform: `${transform} scale(1.16)`, opacity: 0 }], departure));
+  }
+  const approach = portal.animate([{ opacity: 0 }, { opacity: .2, offset: .45 }, { opacity: 1 }], departure);
+  flight.animations.push(approach);
+  await approach.finished.catch(() => {});
+  if (flight.cancelled) return;
+  returnToEntrance(); portal.dataset.phase = 'arrive';
+  let arriving = false;
+  const arrive = () => { if (!arriving && !flight.cancelled && screen === 'entrance' && entranceScene) { arriving = true; entranceScene.arrive(); } };
+  ensureEntrance().then(arrive);
+  // The real 3D camera takes over while the two scenes dissolve into one another.
+  await Promise.race([ensureEntrance(), new Promise((resolve) => setTimeout(resolve, 1200))]);
+  if (flight.cancelled) return;
+  arrive();
+  flight.animations.push($('.header').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 760, easing: 'ease-out', fill: 'forwards' }));
+  const reveal = portal.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 760, easing: 'cubic-bezier(.3,0,.2,1)' });
+  flight.animations.push(reveal); await reveal.finished.catch(() => {});
+  if (!flight.cancelled) cancelPlanetFlight();
+}
+$('#planet-return').addEventListener('click', () => flyToPlanet($('#planet-return')));
+$('#title-return').addEventListener('click', () => { if (phoneLayout.matches) flyToPlanet($('#title-return')); });
 function startExplore() { enterWorld(); if (phoneLayout.matches) world.scrollIntoView({ behavior: reduced ? 'instant' : 'smooth', block: 'center' }); }
 $('#enter-world').addEventListener('click', () => enterWorld());
 $('#explore').addEventListener('click', () => openPanel('research'));
@@ -220,7 +293,7 @@ function updateHUD(state) {
   if (hint.textContent !== hintText) hint.textContent = hintText;
 }
 
-const compactControls = matchMedia('(max-width:1360px), (max-height:820px)');
+const compactControls = phoneLayout;
 function syncMovesLayout() { const open = !compactControls.matches; $('.action-dock').classList.toggle('moves-open', open); $('#toggle-actions').setAttribute('aria-expanded', String(open)); }
 compactControls.addEventListener('change', syncMovesLayout); syncMovesLayout();
 $('#toggle-actions').addEventListener('click', () => { if (!compactControls.matches) return; const open = $('.action-dock').classList.toggle('moves-open'); $('#toggle-actions').setAttribute('aria-expanded', String(open)); });
@@ -233,11 +306,11 @@ function ensureWorld() {
     panorama.addEventListener('error', () => { if (!panorama.src.endsWith('panorama.png')) panorama.src = './assets/world/panorama.png'; });
     panorama.src = panorama.dataset.src;
   }
-  import('./scene-view.js?v=landscape-20260929').then(({ createSceneView }) => {
-    if (!sceneView) sceneView = createSceneView({ element: $('#cosmos'), sceneElement: $('.adventure-stage'), canvas: $('#adventure-canvas'), reduced });
+  import('./scene-view.js?v=portal-20260929').then(({ createSceneView }) => {
+    if (!sceneView) sceneView = createSceneView({ element: $('#cosmos'), sceneElement: $('.adventure-stage'), planetElement: $('#planet-return'), canvas: $('#adventure-canvas'), reduced });
     sceneView.pause(screen !== 'world' || panel.open);
   }).catch(console.error);
-  worldPromise = import('./adventure-scene.js?v=landscape-20260929').then(({ createAdventure }) => createAdventure({ canvas: $('#adventure-canvas'), language, onOpen: openPanel, onUpdate: updateHUD, onFocus: (x, y) => sceneView?.focus(x, y) })).then((result) => {
+  worldPromise = import('./adventure-scene.js?v=portal-20260929').then(({ createAdventure }) => createAdventure({ canvas: $('#adventure-canvas'), language, onOpen: openPanel, onUpdate: updateHUD, onFocus: (x, y) => sceneView?.focus(x, y) })).then((result) => {
     universe = result; universe.setLanguage(language); universe.pause(screen !== 'world' || panel.open); status.hidden = true;
   }).catch((error) => {
     console.error(error); worldPromise = null; $('#retry-world').hidden = false;
@@ -248,7 +321,7 @@ function ensureWorld() {
 $('#retry-world').addEventListener('click', ensureWorld);
 function ensureEntrance() {
   if (entrancePromise) return entrancePromise;
-  entrancePromise = import('./planet-scene.js?v=artwork-20260928').then(({ createUniverse }) => createUniverse({
+  entrancePromise = import('./planet-scene.js?v=portal-20260929').then(({ createUniverse }) => createUniverse({
   mount: $('#scene-host'), language, reduced, introOnly: true,
   onProgress(progress) { $('#scene-loading span:last-child').textContent = `${translations[language].loading} ${Math.round(progress * 100)}%`; },
 })).then((result) => {

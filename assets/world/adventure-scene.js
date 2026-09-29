@@ -1,6 +1,7 @@
 import { ActorController } from './actor-controller.js';
 import { EncounterController, StoneheartController, distance, facingFor, ALERT_RADIUS } from './encounter-controller.js';
 import { loadManifest, loadFrame, loadFrames, loadImage, firstFrames, availableFrame } from './actor-assets.js';
+import { placeFloating } from './floating-layout.js';
 
 export async function createAdventure({ canvas, onOpen, onUpdate, onFocus, language = 'en' }) {
   const manifest = await loadManifest(), frames = Object.values(manifest.groups).flat();
@@ -23,6 +24,25 @@ export async function createAdventure({ canvas, onOpen, onUpdate, onFocus, langu
   let width = 0, height = 0, last = 0, elapsed = 0, paused = true, facing = 1, target = null, frameToken = '', lang = language;
   const preview = document.querySelector('#actor-preview'), previewCtx = preview.getContext('2d');
   const bubble = document.querySelector('#adventure-bubble');
+  let bubbleLayoutAt = -1;
+  function placeBubble(playerPoint, playerScale, npcPoint, npcScale) {
+    const stage = canvas.getBoundingClientRect();
+    const rectOf = (element) => {
+      const rect = element.getBoundingClientRect();
+      return { x: rect.left - stage.left, y: rect.top - stage.top, width: rect.width, height: rect.height };
+    };
+    const obstacles = [...document.querySelectorAll('.eyebrow, #hero-title, .intro-copy, .intro > button, .field-note, .station-label, .station-object, .action-dock, .world-caption, .actor-hud, .npc-hud, #planet-return')]
+      .filter((element) => !element.hidden && getComputedStyle(element).display !== 'none')
+      .map(rectOf);
+    if (stoneheart.opacity > 0) obstacles.push({ x: npcPoint.x - 343 * npcScale, y: npcPoint.y - 765 * npcScale, width: 672 * npcScale, height: 771 * npcScale });
+    const anchor = { x: playerPoint.x - 300 * playerScale, y: playerPoint.y - 850 * playerScale, width: 620 * playerScale, height: 850 * playerScale };
+    const placement = placeFloating({ anchor, size: { width: bubble.offsetWidth, height: bubble.offsetHeight }, bounds: { x: 8, y: 8, width: width - 16, height: height - 16 }, obstacles });
+    bubble.classList.toggle('bubble-blocked', !placement);
+    if (placement) {
+      bubble.style.left = `${placement.x}px`; bubble.style.top = `${placement.y}px`;
+      bubble.dataset.placement = 'clear';
+    } else bubble.dataset.placement = 'hidden';
+  }
   function resize() { const rect = canvas.getBoundingClientRect(); if (!rect.width || !rect.height) return; width = rect.width; height = rect.height; const dpr = Math.min(devicePixelRatio, 1.7); canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
   new ResizeObserver(resize).observe(canvas); resize();
   const point = (position) => ({ x: position.x / 1000 * width, y: position.y / 600 * height });
@@ -73,7 +93,7 @@ export async function createAdventure({ canvas, onOpen, onUpdate, onFocus, langu
     const position = { x: (event.clientX - rect.left) / rect.width * 1000, y: (event.clientY - rect.top) / rect.height * 600 };
     if (stoneheart.opacity > 0 && Math.abs(position.x - npc.x) < 45 && position.y < npc.y && position.y > npc.y - 130) { onOpen('npc'); return; }
     target = { x: Math.max(200, Math.min(950, position.x)), y: Math.max(230, Math.min(520, position.y)) };
-    const contained = matchMedia('(max-width:1360px), (max-height:820px)').matches;
+    const contained = matchMedia('(max-width:760px)').matches;
     onFocus?.(contained ? position.x / 1000 : event.clientX / innerWidth, contained ? position.y / 600 : event.clientY / innerHeight);
   }
   // Let a finger scroll the page without sending Pudding toward Stoneheart.
@@ -122,7 +142,8 @@ export async function createAdventure({ canvas, onOpen, onUpdate, onFocus, langu
     for (const event of encounter.drainEvents()) { if (event.type === 'hit' && actor.hit()) { spark(event.position); target = null; } }
     frame = actor.frame(moving);
     ctx.clearRect(0, 0, width, height);
-    const p = point(player), n = point(npc), scale = Math.min(width < 700 ? .135 : .22, height / 2500), npcScale = scale * 1.12;
+    const narrowDesktop = matchMedia('(min-width:760.001px) and (max-width:1100px)').matches;
+    const p = point(player), n = point(npc), scale = Math.min(width < 700 ? .135 : .22, height / 2500, narrowDesktop ? width / 6500 : Infinity), npcScale = scale * 1.12;
     const hud = document.querySelector('.actor-hud'); hud.style.left = `${p.x}px`; hud.style.top = `${p.y + 24}px`;
     const npcHud = document.querySelector('.npc-hud'); npcHud.style.left = `${n.x}px`; npcHud.style.top = `${n.y + 24}px`;
     function shadow(position, size) { ctx.save(); ctx.fillStyle = '#dcafd028'; ctx.beginPath(); ctx.ellipse(position.x, position.y + 4, size, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
@@ -143,7 +164,9 @@ export async function createAdventure({ canvas, onOpen, onUpdate, onFocus, langu
     }
     if (actor.action === 'revive') { ctx.save(); ctx.globalAlpha = Math.sin(frame.progress * Math.PI) * .5; const gradient = ctx.createLinearGradient(p.x - 40, 0, p.x + 40, 0); gradient.addColorStop(0, '#b4eddf00'); gradient.addColorStop(.5, '#b4eddfbb'); gradient.addColorStop(1, '#b4eddf00'); ctx.fillStyle = gradient; ctx.fillRect(p.x - 40, p.y - 240, 80, 245); ctx.restore(); }
     const token = `${frame.group}/${frame.index}/${facing}`; if (token !== frameToken) { previewFrame(frame); frameToken = token; }
-    bubble.style.left = `${p.x}px`; bubble.style.top = `${p.y - 850 * scale - 28}px`; bubble.classList.toggle('quiet', elapsed > 8 || actor.action !== 'idle');
+    const bubbleVisible = elapsed <= 8 && actor.action === 'idle';
+    if (bubbleVisible && elapsed - bubbleLayoutAt >= .08) { placeBubble(p, scale, n, npcScale); bubbleLayoutAt = elapsed; }
+    bubble.classList.toggle('quiet', !bubbleVisible);
     onUpdate?.({ action: frame.action, group: frame.group, frame: frame.index, frameSource: frame.src, hp: actor.hp, dead: actor.dead, reviveIn: actor.reviveIn, npcHP: stoneheart.hp, npcLife: stoneheart.phase, npcOpacity: stoneheart.opacity, npcReviveIn: stoneheart.reviveIn, npcPhase: state.phase, nearby: state.nearby, shots: state.shots, projectiles: state.projectiles.length, facing, position: [player.x, player.y, 0] });
     canvas.dataset.facing = String(facing); canvas.dataset.npcDistance = distance(player, npc).toFixed(1); canvas.dataset.alertRadius = String(ALERT_RADIUS); canvas.dataset.projectiles = String(state.projectiles.length); canvas.dataset.shots = String(state.shots);
   }

@@ -211,7 +211,7 @@ export async function createUniverse({ mount, onOpen, onUpdate, onProgress, lang
   }
 
   function view(name, instant = false) {
-    const mobile = mount.clientWidth < 550;
+    const mobile = (mount.clientWidth || innerWidth) < 550;
     const presets = {
       orbit: { position: new THREE.Vector3(mobile ? introOnly ? 24 : 17 : 13, mobile ? introOnly ? 22 : 14 : 12, mobile ? introOnly ? 34 : 23 : 19), target: new THREE.Vector3(0, .75, 0) },
       land: { position: new THREE.Vector3(7.4, 9.6, 12.2), target: new THREE.Vector3(0, FLOOR + .75, -.15) },
@@ -225,6 +225,15 @@ export async function createUniverse({ mount, onOpen, onUpdate, onProgress, lang
     cameraTween = null; const relative = camera.position.clone().sub(controls.target); relative.applyAxisAngle(new THREE.Vector3(0, 1, 0), amount); camera.position.copy(controls.target).add(relative); controls.update();
   }
   function zoom(factor) { cameraTween = null; const offset = camera.position.clone().sub(controls.target); const length = THREE.MathUtils.clamp(offset.length() * factor, controls.minDistance, controls.maxDistance); offset.setLength(length); camera.position.copy(controls.target).add(offset); controls.update(); }
+  function arrive() {
+    resize();
+    if (calm) return;
+    const to = camera.position.clone(), target = controls.target.clone();
+    const offset = to.clone().sub(target);
+    offset.setLength(Math.min(controls.maxDistance, offset.length() * 1.16));
+    camera.position.copy(target).add(offset); controls.update();
+    cameraTween = { from: camera.position.clone(), targetFrom: target.clone(), to, targetTo: target, elapsed: 0, duration: 1.2 };
+  }
   function challenge() {
     if (battle && npcHP > 0) { battle = false; npcPhase = 'idle'; npc.position.copy(npcPosition); return; }
     if (actor.dead) actor.trigger('revive');
@@ -359,7 +368,7 @@ export async function createUniverse({ mount, onOpen, onUpdate, onProgress, lang
     }
     const dt = Math.min((time - last) / 1000 || .016, .05); last = time;
     if (cameraTween) {
-      cameraTween.elapsed += dt; const t = Math.min(cameraTween.elapsed / .9, 1), smooth = t * t * (3 - 2 * t);
+      cameraTween.elapsed += dt; const t = Math.min(cameraTween.elapsed / (cameraTween.duration || .9), 1), smooth = t * t * (3 - 2 * t);
       camera.position.lerpVectors(cameraTween.from, cameraTween.to, smooth); controls.target.lerpVectors(cameraTween.targetFrom, cameraTween.targetTo, smooth);
       if (t >= 1) cameraTween = null;
     }
@@ -416,7 +425,7 @@ export async function createUniverse({ mount, onOpen, onUpdate, onProgress, lang
   }
   setLanguage(lang); renderer.render(scene, camera); requestAnimationFrame(render);
   return {
-    action, view, rotate, zoom, challenge, interact,
+    action, view, rotate, zoom, challenge, interact, arrive,
     move(direction, active) { const key = { left: 'a', right: 'd', up: 'w', down: 's' }[direction]; if (active) { held.add(key); actor.demoUntil = 0; } else held.delete(key); },
     pause(value) { paused = value; controls.enabled = !value; held.clear(); },
     setReduced(value) { calm = value; controls.autoRotate = introOnly && !value; if (value) cameraTween = null; },

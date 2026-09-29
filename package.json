@@ -39,6 +39,7 @@
     "test:actors": "node scripts/test-actors.mjs",
     "test:encounter": "node scripts/test-encounter.mjs",
     "test:view": "node scripts/test-view.mjs",
+    "test:layout": "node scripts/test-floating-layout.mjs",
     "test:routes": "node scripts/test-routes.mjs",
     "test:loading": "node scripts/test-loading.mjs",
     "uglify": "uglifyjs node_modules/jquery/dist/jquery.min.js node_modules/fitvids/dist/fitvids.min.js node_modules/jquery-smooth-scroll/jquery.smooth-scroll.min.js node_modules/plotly.js-dist-min/plotly.min.js assets/js/plugins/jquery.greedy-navigation.js assets/js/_main.js -c -m -o assets/js/main.min.js",

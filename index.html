@@ -7,9 +7,9 @@
   <meta name="description" content="Wang Jiaying (王佳影), Ph.D. student at the Software Institute, Nanjing University. AI4Health, medical EEG, millimeter-wave radar heart-rate estimation, and trustworthy AI for incomplete physiological and biological signals.">
   <title>Zaying · A little universe</title>
   <link rel="icon" href="./assets/world/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/world/world.css?v=landscape-20260929">
+  <link rel="stylesheet" href="./assets/world/world.css?v=portal-20260929">
   <script type="importmap">{"imports":{"three":"./assets/world/vendor/three.module.js"}}</script>
-  <script src="./assets/world/world.js?v=landscape-20260929" defer></script>
+  <script src="./assets/world/world.js?v=portal-20260929" defer></script>
 </head>
 <body data-screen="entrance">
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><defs>
@@ -39,9 +39,11 @@
   <div class="cosmos" id="cosmos" aria-hidden="true">
     <div class="landscape"></div><div class="color-wash"></div><div class="stars" id="stars"></div>
     <div class="meteors" aria-hidden="true"><span class="meteor meteor-one"></span><span class="meteor meteor-two"></span><span class="meteor meteor-three"></span><span class="meteor meteor-four"></span><span class="meteor meteor-five"></span><span class="meteor meteor-six"></span><span class="meteor meteor-seven"></span><span class="meteor meteor-eight"></span><span class="meteor meteor-nine"></span></div>
-    <div class="planet"><span></span></div>
     <svg class="orbit-lines" viewBox="0 0 1440 900" preserveAspectRatio="none"><path d="M-100 680 Q650 40 1550 510"/><path d="M-100 720 Q850 200 1550 680"/><circle cx="1190" cy="173" r="160"/></svg>
   </div>
+
+  <button class="planet planet-return" id="planet-return" aria-label="Back to my little planet" hidden><span class="planet-sheen" aria-hidden="true"></span><span class="planet-whisper" data-i18n="planetWhisper" aria-hidden="true">a way home</span></button>
+  <div class="planet-portal" id="planet-portal" aria-hidden="true" hidden></div>
 
   <header class="header">
     <a class="wordmark" href="#" aria-label="Zaying, return to the world"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 19.5 12.5 30 16 19.5 19.5 16 30 12.5 19.5 2 16 12.5 12.5Z"/></svg><span>zaying<span class="wordmark-dot">.</span></span><small>PERSONAL ORBIT</small></a>
@@ -71,7 +73,7 @@
   <main id="main" hidden>
     <section class="intro" aria-labelledby="hero-title">
       <p class="eyebrow"><span class="status-dot"></span><span data-i18n="eyebrow">HELLO, EARTHLING. I'M ZAYING.</span></p>
-      <h1 id="hero-title"><span data-i18n="title1">A little world</span><br><em data-i18n="title2">Outside of time.</em><span class="title-star" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-spark"></use></svg></span></h1>
+      <h1 id="hero-title"><button class="title-return" id="title-return" disabled aria-label="Return to the little planet"><span data-i18n="title1">A little world</span><br><em data-i18n="title2">Outside of time.</em></button><span class="title-star" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-spark"></use></svg></span></h1>
       <p class="intro-copy" data-i18n="intro">Exploring AI for health, making things by hand,<br>and leaving a little room for wonder.</p>
       <button class="primary-button" id="explore"><span data-i18n="explore">Explore my universe</span><span aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-arrow-up-right"></use></svg></span></button>
       <button class="text-button" data-open="about"><span data-i18n="read">Or, get to know me</span><span aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-arrow-right"></use></svg></span></button>

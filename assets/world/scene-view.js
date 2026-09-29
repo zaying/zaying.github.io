@@ -18,11 +18,11 @@ export class SceneView {
   }
 }
 
-export function createSceneView({ element, sceneElement, canvas, reduced = false }) {
+export function createSceneView({ element, sceneElement, planetElement, canvas, reduced = false }) {
   const view = new SceneView(); view.setReduced(reduced);
   let paused = true, last = 0, elapsed = 0;
   const paint = (state) => {
-    for (const layer of [element, sceneElement].filter(Boolean)) {
+    for (const layer of [element, sceneElement, planetElement].filter(Boolean)) {
       layer.style.setProperty('--view-x', `${state.x.toFixed(2)}px`);
       layer.style.setProperty('--view-y', `${state.y.toFixed(2)}px`);
       layer.style.setProperty('--view-zoom', state.zoom.toFixed(4));
@@ -40,7 +40,7 @@ export function createSceneView({ element, sceneElement, canvas, reduced = false
     const dt = Math.min((time - last) / 1000 || .016, .05); last = time;
     if (paused || document.hidden || view.reduced) return;
     elapsed += dt;
-    const mobile = matchMedia('(max-width:1360px), (max-height:820px)').matches;
+    const mobile = matchMedia('(max-width:760px)').matches;
     paint(view.update(dt, { width: mobile ? canvas.clientWidth : innerWidth, height: mobile ? canvas.clientHeight : innerHeight, mobile, time: elapsed }));
   }
   paint({ x: 0, y: 0, zoom: view.zoom }); requestAnimationFrame(render);

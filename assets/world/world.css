@@ -132,6 +132,7 @@ body.returning-to-planet{cursor:wait}
 .secondary-action{color:var(--mint);background:transparent;border:1px solid #b4eddf66}
 .secondary-action:hover{background:#b4eddf12;color:var(--mint);border-color:var(--mint)}
 .orcid-mark{width:21px;height:21px;flex:none}
+.researchgate-mark{width:21px;height:21px;flex:none}
 .friends-section{margin-top:32px;padding-top:25px;border-top:1px solid #b4eddf24}
 .friends-section h3{font:18px Georgia,'Microsoft YaHei',serif;font-weight:400;color:#d2e9e3;margin:0 0 16px}
 .friend-card{display:flex;align-items:center;gap:16px;padding:16px;border:1px solid #b4eddf30;border-radius:12px;background:#b4eddf04;transition:background .2s,border-color .2s}
@@ -147,8 +148,8 @@ body.returning-to-planet{cursor:wait}
   .planet-return .planet-whisper{display:none}
   .title-return:not(:disabled){pointer-events:auto;cursor:pointer}
   .panel-actions{flex-direction:column;gap:10px;margin-top:20px}
-  .panel-actions .panel-action{width:100%;justify-content:space-between}
-  .orcid-link>span{flex:1;text-align:left}
+  .panel-actions .panel-action{width:100%;min-height:49px;justify-content:space-between}
+  .panel-actions .secondary-action>span{flex:1;text-align:left}
   .friends-section{margin-top:26px;padding-top:22px}
   .friend-card{padding:13px;gap:12px}
   .friend-copy small{font-size:9px}
